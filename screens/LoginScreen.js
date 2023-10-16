@@ -1,5 +1,5 @@
-import { View, Text, Image, TextInput } from "react-native";
-import React, { useState } from "react";
+import { View, Text, Image, TextInput , Alert  } from "react-native";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@rneui/themed";
@@ -8,16 +8,61 @@ import MetaLogo from "../assets/images/logo-Meta.png";
 
 import { s } from "react-native-wind";
 
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
+import { initializeApp } from "firebase/app";
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { firebaseConfig } from "../firebase";
+
+
+const app = initializeApp(firebaseConfig);
+initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
+
 export default function LoginScreen({navigation}) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+useEffect(() => {
+  const auth = getAuth();
+  onAuthStateChanged(auth,(user) =>{
+    if (user) {
+      navigation.replace("MainScreen")
+    }
+  })
+})
 
-  
-  const createNewAccount = () => {
+const createNewAccount = () => {
   navigation.navigate("RegisterScreen");
   }
+
+  const Login = () =>{
+    const auth =  getAuth 
+    if (
+      email && password
+    ){
+      signInWithEmailAndPassword(auth,email,password).then((userCredentials) => {
+        const user = userCredentials.user;
+        console.log("logged in :", user.email)
+      })
+      .catch((error) => {
+        if (error.code === "auth/user-not-found"){
+          Alert.alert("wrong Email","Enter Correct Mail");
+        }
+        if (error.code === "auth/wrong-password"){
+          Alert.alert("please check password");
+        }
+        console.error("error signing in ", error.message);
+
+      });
+    }
+  }
+
+
+  
+ 
   
 
   return (
@@ -48,7 +93,7 @@ export default function LoginScreen({navigation}) {
       <View style={s `w-11/12`}>
         <Button
           title="Login"
-          //onPress={Login}
+          onPress={Login}
           buttonStyle={s`rounded-2xl mt-4`}
         />
 
